@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.1
+	github.com/go-playground/assert/v2 v2.0.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/mutagen-io/mutagen v0.16.2
 	google.golang.org/grpc v1.51.0

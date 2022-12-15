@@ -48,7 +48,7 @@ type Selections struct {
 	Label string `json:"label"`
 }
 
-func InitSyncRoutes(grpcConn *grpc.ClientConn, c *gin.Engine) {
+func initSyncRoutes(grpcConn *grpc.ClientConn, c *gin.Engine) {
 	// websocket service
 	c.GET("/synchronization", func(context *gin.Context) {
 		conn, err := upgrader.Upgrade(context.Writer, context.Request, nil)
@@ -58,10 +58,10 @@ func InitSyncRoutes(grpcConn *grpc.ClientConn, c *gin.Engine) {
 		}
 
 		wsr := websocketserver.NewServer(conn)
-		promptAckChan := make(chan string)
+		promptAnswerChan := make(chan string)
 		prompter := &prompting.WebsocketPrompter{
 			Conn:       wsr.Conn,
-			AnswerChan: promptAckChan,
+			AnswerChan: promptAnswerChan,
 			Server:     wsr,
 		}
 
@@ -97,7 +97,7 @@ func InitSyncRoutes(grpcConn *grpc.ClientConn, c *gin.Engine) {
 		})
 
 		wsr.Register(websocketserver.PromptAck, func(request websocketserver.Request) (interface{}, *websocketserver.Error) {
-			promptAckChan <- request.Data.(string)
+			promptAnswerChan <- request.Data.(string)
 			return nil, nil
 		})
 
@@ -196,7 +196,7 @@ func InitSyncRoutes(grpcConn *grpc.ClientConn, c *gin.Engine) {
 
 		c.IndentedJSON(200, websocketserver.Response{
 			Message: "",
-			Action:  "list",
+			Action:  "ack",
 			Data:    res,
 			Code:    0,
 			Id:      0,

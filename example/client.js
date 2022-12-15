@@ -1,6 +1,6 @@
 class Client {
-    constructor(url) {
-        const websocket = new WebSocket("ws://127.0.0.1:8081/synchronization")
+    constructor(url="ws://127.0.0.1:8081/synchronization") {
+        const websocket = new WebSocket(url)
         websocket.onopen = function () {
             console.log(url, "connected");
         };
@@ -10,7 +10,7 @@ class Client {
             data = JSON.parse(data)
             if (data.action === "prompt") {
                 console.log(data.message);
-                this.sendMessage("promptAck", prompt(data.message))
+                this.sendMessage("answer", prompt(data.message))
             } else if (data.action === "message") {
                 console.log(data.message);
             } else if (data.action === "error") {
@@ -27,10 +27,31 @@ class Client {
     }
 
     sendMessage(action, data) {
+        const id = this.id++;
         this.websocket.send(JSON.stringify({
             action,
-            id: this.id++,
+            id,
             data
         }))
+    }
+
+    create(creation) {
+        this.sendMessage('creation', creation)
+    }
+
+    pause(selections) {
+        this.sendMessage('pause', selections)
+    }
+
+    reset(selections) {
+        this.sendMessage('reset', selections)
+    }
+
+    flush(selections) {
+        this.sendMessage("flush", selections)
+    }
+
+    terminate(selections) {
+        this.sendMessage("terminate", selections)
     }
 }

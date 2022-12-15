@@ -4,7 +4,7 @@ const (
 	SyncCreation  = "creation"
 	SyncPause     = "pause"
 	SyncFlush     = "flush"
-	PromptAck     = "promptAck"
+	PromptAck     = "answer"
 	SyncList      = "list"
 	SyncResume    = "resume"
 	SyncReset     = "reset"

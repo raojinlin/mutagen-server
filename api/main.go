@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"google.golang.org/grpc"
@@ -15,10 +16,22 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func InitRoutes(grpcConn *grpc.ClientConn, c *gin.Engine) {
-	InitSyncRoutes(grpcConn, c)
+func initRoutes(grpcConn *grpc.ClientConn, c *gin.Engine) {
+	initSyncRoutes(grpcConn, c)
 	// index
 	c.GET("/", func(c *gin.Context) {
 		c.Writer.Write([]byte("home"))
 	})
+}
+
+func SetupRouter(cc *grpc.ClientConn, listen string) *gin.Engine {
+	router := gin.Default()
+
+	cfg := cors.DefaultConfig()
+	cfg.AllowOrigins = []string{"http://" + listen}
+
+	router.Use(cors.New(cfg))
+
+	initRoutes(cc, router)
+	return router
 }

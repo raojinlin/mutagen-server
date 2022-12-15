@@ -5,9 +5,13 @@ class Client {
             console.log(url, "connected");
         };
 
+        this.pendding = {};
         websocket.onmessage = (event)  => {
             let { data } = event;
             data = JSON.parse(data)
+            if (this.pendding[data.id]) {
+                this.pendding[data.id].resolve(data.data);
+            }
             if (data.action === "prompt") {
                 console.log(data.message);
                 this.sendMessage("answer", prompt(data.message))
@@ -33,25 +37,80 @@ class Client {
             id,
             data
         }))
+
+        const prom = function () {
+            let res;
+            const p = new Promise(resolve => {
+                res = resolve;
+            });
+
+            p.resolve = res;
+            return p;
+        }
+
+        return this.pendding[id] = prom();
     }
 
     create(creation) {
-        this.sendMessage('creation', creation)
+        return this.sendMessage('creation', creation)
     }
 
     pause(selections) {
-        this.sendMessage('pause', selections)
+        return this.sendMessage('pause', selections)
     }
 
     reset(selections) {
-        this.sendMessage('reset', selections)
+        return this.sendMessage('reset', selections)
     }
 
     flush(selections) {
-        this.sendMessage("flush", selections)
+        return this.sendMessage("flush", selections)
     }
 
     terminate(selections) {
-        this.sendMessage("terminate", selections)
+        return this.sendMessage("terminate", selections)
+    }
+}
+
+async function test() {
+    let creation = {
+        "name": "mutagen-server-create1",
+        "labels": {
+            "created_by": "mutagen-server",
+            "owner": "raojinlin",
+        },
+        "paused": false,
+        "alpha": {
+            "path": "/tmp/mutagen_test"
+        },
+        "beta": {
+            "protocol": "ssh",
+            "user": "raojinlin",
+            "host":"192.168.31.111",
+            "port": 22,
+            "path": "/tmp/xxx_sync"
+        }
+    };
+
+    const client = new Client();
+    client.websocket.onopen = async function () {
+        const createResult = client.create(creation)
+        console.log(createResult);
+
+        const pausedResult = client.pause({name: 'mutagen-server-create1'})
+        console.log(pausedResult);
+        console.log(await client.sendMessage('list', {name: 'mutagen-server-create1'}));
+
+        const resumeResult = client.sendMessage('resume', {name: 'mutagen-server-create1'})
+        console.log(resumeResult);
+        console.log(await client.sendMessage('list', {name: 'mutagen-server-create1'}));
+
+        const resetResult = client.reset({name: 'mutagen-server-create1'})
+        console.log(resetResult);
+        console.log(await client.sendMessage('list', {name: 'mutagen-server-create1'}));
+
+        const terminateResult = client.terminate({name: 'mutagen-server-create1'})
+        console.log(terminateResult)
+        console.log(await client.sendMessage('list', {name: 'mutagen-server-create1'}));
     }
 }

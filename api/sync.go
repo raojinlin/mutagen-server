@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/mutagen-io/mutagen/pkg/selection"
 	syncsvc "github.com/mutagen-io/mutagen/pkg/service/synchronization"
+	"github.com/mutagen-io/mutagen/pkg/synchronization"
 	"github.com/raojinlin/mutagen-server/internal/mutagen/prompting"
 	"github.com/raojinlin/mutagen-server/internal/mutagen/sync"
 	"github.com/raojinlin/mutagen-server/internal/websocketserver"
@@ -48,6 +49,16 @@ type Selections struct {
 	Label string `json:"label"`
 }
 
+func unmarshalRequestData(data interface{}, v interface{}) error {
+	jsonStr, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(jsonStr, &v)
+	return err
+}
+
 func initSyncRoutes(grpcConn *grpc.ClientConn, c *gin.Engine) {
 	// websocket service
 	c.GET("/synchronization", func(context *gin.Context) {
@@ -68,11 +79,22 @@ func initSyncRoutes(grpcConn *grpc.ClientConn, c *gin.Engine) {
 		wsr.Register(websocketserver.SyncCreation, func(request websocketserver.Request) (interface{}, *websocketserver.Error) {
 			var creation syncsvc.CreationSpecification
 			if request.Data != nil {
-				jsonStr, _ := json.Marshal(request.Data)
-				err := json.Unmarshal(jsonStr, &creation)
+				err := unmarshalRequestData(request.Data, &creation)
 				if err != nil {
 					return nil, websocketserver.NewError(websocketserver.CodeCommonError, err.Error())
 				}
+			}
+
+			if creation.Configuration == nil {
+				creation.Configuration = &synchronization.Configuration{}
+			}
+
+			if creation.ConfigurationAlpha == nil {
+				creation.ConfigurationAlpha = creation.Configuration
+			}
+
+			if creation.ConfigurationBeta == nil {
+				creation.ConfigurationBeta = creation.Configuration
 			}
 
 			r, err := sync.Create(grpcConn, prompter, &creation)
@@ -86,7 +108,10 @@ func initSyncRoutes(grpcConn *grpc.ClientConn, c *gin.Engine) {
 		wsr.Register(websocketserver.SyncList, func(request websocketserver.Request) (interface{}, *websocketserver.Error) {
 			var sel Selections
 			if request.Data != nil {
-				sel = request.Data.(Selections)
+				err := unmarshalRequestData(request.Data, &sel)
+				if err != nil {
+					return nil, websocketserver.NewError(websocketserver.CodeCommonError, err.Error())
+				}
 			}
 			r, err := sync.List(grpcConn, generateSelections(sel.Id, sel.Name, sel.Label))
 			if err != nil {
@@ -104,7 +129,10 @@ func initSyncRoutes(grpcConn *grpc.ClientConn, c *gin.Engine) {
 		wsr.Register(websocketserver.SyncResume, func(request websocketserver.Request) (interface{}, *websocketserver.Error) {
 			var sel Selections
 			if request.Data != nil {
-				sel = request.Data.(Selections)
+				err := unmarshalRequestData(request.Data, &sel)
+				if err != nil {
+					return nil, websocketserver.NewError(websocketserver.CodeCommonError, err.Error())
+				}
 			}
 
 			result, err := sync.Resume(grpcConn, prompter, generateSelections(sel.Id, sel.Name, sel.Label))
@@ -119,7 +147,10 @@ func initSyncRoutes(grpcConn *grpc.ClientConn, c *gin.Engine) {
 		wsr.Register(websocketserver.SyncPause, func(request websocketserver.Request) (interface{}, *websocketserver.Error) {
 			var sel Selections
 			if request.Data != nil {
-				sel = request.Data.(Selections)
+				err := unmarshalRequestData(request.Data, &sel)
+				if err != nil {
+					return nil, websocketserver.NewError(websocketserver.CodeCommonError, err.Error())
+				}
 			}
 			result, err := sync.Pause(grpcConn, prompter, generateSelections(sel.Id, sel.Name, sel.Label))
 
@@ -133,7 +164,10 @@ func initSyncRoutes(grpcConn *grpc.ClientConn, c *gin.Engine) {
 		wsr.Register(websocketserver.SyncFlush, func(request websocketserver.Request) (interface{}, *websocketserver.Error) {
 			var sel Selections
 			if request.Data != nil {
-				sel = request.Data.(Selections)
+				err := unmarshalRequestData(request.Data, &sel)
+				if err != nil {
+					return nil, websocketserver.NewError(websocketserver.CodeCommonError, err.Error())
+				}
 			}
 			result, err := sync.Flush(grpcConn, prompter, generateSelections(sel.Id, sel.Name, sel.Label))
 
@@ -144,10 +178,13 @@ func initSyncRoutes(grpcConn *grpc.ClientConn, c *gin.Engine) {
 			return result, nil
 		})
 
-		wsr.Register(websocketserver.SyncReset, func(payload websocketserver.Request) (interface{}, *websocketserver.Error) {
+		wsr.Register(websocketserver.SyncReset, func(request websocketserver.Request) (interface{}, *websocketserver.Error) {
 			var sel Selections
-			if payload.Data != nil {
-				sel = payload.Data.(Selections)
+			if request.Data != nil {
+				err := unmarshalRequestData(request.Data, &sel)
+				if err != nil {
+					return nil, websocketserver.NewError(websocketserver.CodeCommonError, err.Error())
+				}
 			}
 			result, err := sync.Reset(grpcConn, prompter, generateSelections(sel.Id, sel.Name, sel.Label))
 
@@ -161,7 +198,10 @@ func initSyncRoutes(grpcConn *grpc.ClientConn, c *gin.Engine) {
 		wsr.Register(websocketserver.SyncTerminate, func(request websocketserver.Request) (interface{}, *websocketserver.Error) {
 			var sel Selections
 			if request.Data != nil {
-				sel = request.Data.(Selections)
+				err := unmarshalRequestData(request.Data, &sel)
+				if err != nil {
+					return nil, websocketserver.NewError(websocketserver.CodeCommonError, err.Error())
+				}
 			}
 			result, err := sync.Terminate(grpcConn, prompter, generateSelections(sel.Id, sel.Name, sel.Label))
 

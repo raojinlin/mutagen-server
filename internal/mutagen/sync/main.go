@@ -153,11 +153,11 @@ func Reset(conn *grpc.ClientConn, prompter prompting.Prompter, sel *selection.Se
 		client := syncsvc.NewSynchronizationClient(conn)
 		ctx, cancel := context.WithTimeout(context.Background(), 9*time.Second)
 		defer cancel()
-		request := &syncsvc.FlushRequest{
+		request := &syncsvc.ResetRequest{
 			Prompter:  prompterIdentifier,
 			Selection: sel,
 		}
-		return client.Flush(ctx, request)
+		return client.Reset(ctx, request)
 	})
 
 	if result == nil {

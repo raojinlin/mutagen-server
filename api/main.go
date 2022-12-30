@@ -28,7 +28,7 @@ func SetupRouter(cc *grpc.ClientConn, listen string) *gin.Engine {
 	router := gin.Default()
 
 	cfg := cors.DefaultConfig()
-	cfg.AllowOrigins = []string{"http://" + listen}
+	cfg.AllowOrigins = []string{"http://" + listen, "http://localhost:3000"}
 
 	router.Use(cors.New(cfg))
 

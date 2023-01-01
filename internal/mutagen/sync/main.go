@@ -35,6 +35,7 @@ func WithPrompting(conn *grpc.ClientConn, prompter prompting.Prompter, handler H
 		return nil, err
 	}
 
+	promptingCancel()
 	errs := <-promptingErrors
 	fmt.Println(errs)
 	return ret, nil

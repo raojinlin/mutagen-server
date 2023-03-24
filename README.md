@@ -1,15 +1,44 @@
 # Mutagen Server
 
-这是一个为```mutagen```提供websocket接口的服务器软件。目前只支持文件同步接口，支持SSH密码输入。
+该项目是一个为Mutagen提供WebSocket接口的服务器软件。目前，该项目只支持文件同步接口，并支持SSH密码输入。该项目旨在为Mutagen做一个Web端扩展，允许用户通过GUI创建和监控同步任务。
 
-## 接口
+## 安装
+使用以下命令进行安装：
+
+```bash
+$ go get -u github.com/raojinlin/mutagen-server
+```
+
+## 使用示例
+
+命令参数
+```bash
+$ mutagen-server --help
+Usage of mutagen-server
+  -listen string
+        specify listen address (default "127.0.0.1:8081")
+  -sock string
+        specify daemon sock path (default "unix:/Users/raojinlin/.mutagen/daemon/daemon.sock")
+
+```
+
+启动服务器
+```bash
+$ mutagen-server -listen 127.0.0.1:8081 -sock ~/.mutagen/daemon//daemon.sock
+```
+你可以使用curl命令测试是否启动成功。
+```bash
+$ curl 127.0.0.1:8081
+```
+
+## 支持的接口
 * 文件同步
-  * 查询
-  * 创建
-  * 暂停
-  * 恢复
-  * 重置
-  * 终结
+  * 查询同步会话
+  * 创建同步任务
+  * 暂停同步任务
+  * 恢复同步任务
+  * 重置同步任务
+  * 终止同步任务
 
 ### 查询同步会话
 ```http request
@@ -73,7 +102,7 @@ GET /api/synchronization/sessions?id=SESSION_ID&label=LABEL_SELECTOR&name=NAME
 
 ### Websocket接口
 
-websocket接口请求与响应数据格式如下。
+下面是文件同步接口配置，websocket接口请求与响应数据格式如下。
 
 请求
 ```go
